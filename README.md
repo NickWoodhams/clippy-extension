@@ -1,3 +1,2 @@
-Clippy
+Clippy chrome extension
 =====
-
