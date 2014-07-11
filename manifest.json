@@ -1,0 +1,19 @@
+{
+  "name": "Clippy",
+  "short_name": "Clippy",
+  "version": "1.0.2",
+  "manifest_version": 2,
+  "description": "Clip HTML straight from websites!",
+  "background": { "scripts": ["main.js"] },
+  "browser_action": {
+    "default_icon": {
+      "19": "images/dash.png"
+    }
+  },
+  "permissions": [
+    "tabs",
+    "http://*/*",
+    "https://*/*",
+    "<all_urls>"
+  ]
+}
