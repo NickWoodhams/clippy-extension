@@ -56,7 +56,8 @@ function wait_for_script_load(look_for, callback) {
 
 
 function show_loader_pane() {
-  jQuery('body').append('<div id="snippet-loader">Loading Clip</div>');
+    jQuery('body').append('<div id="snippet-loader">Loading Clip</div>');
+
     var opts = {
       lines: 13, // The number of lines to draw
       length: 7, // The length of each line
@@ -274,7 +275,7 @@ function make_inline_styles(vanilla_js_obj, ignore_styles) {
     "zIndex": "auto",
     "zoom": "1"
   };
-  
+
   for (var i = 0; i < ignore_styles.length; i++) {
       delete defaults[ignore_styles[i]];
   }
@@ -286,7 +287,7 @@ function make_inline_styles(vanilla_js_obj, ignore_styles) {
 
     if (defaults.hasOwnProperty(key) && computed_styles[key] != defaults[key]) {
       //further handling...
-      
+
       new_js_obj.style[key] = computed_styles[key];
     }
   }
@@ -312,13 +313,14 @@ function activatePicker() {
     jQuery("#clippy-authentication").remove();
     importCSS('https://clippy.in/static/css/bookmarklet-styles.css');
     importJS('https://clippy.in/ajax/authenticate?domain=' + window.location.href);
-    
+
     var snip_event_listener = {
-      current_target: null
+        current_target: null
     };
 
     snip_event_listener.mouseover = function(e) {
-      e.target.style.outline = "4px solid #4c88ae";
+        snip_event_listener.current_target = e.target;
+        e.target.style.outline = "4px solid #4c88ae";
     };
 
     snip_event_listener.mouseout = function(e) {
@@ -399,18 +401,18 @@ function activatePicker() {
       // console.log(inline_html_js_obj);
       // console.log("---------------------------------");
 
-      
+
       items = html_js_obj.getElementsByTagName("*");
       inline_items = inline_html_js_obj.getElementsByTagName("*");
       for (var i = items.length; i--;) {
-        
+
         new_element = make_inline_styles(items[i], ignore_styles=[]);
         if (new_element.tagName != 'SCRIPT') {
           var a = inline_items[i].parentNode.replaceChild(new_element, inline_items[i]);
           // console.log(a);
         }
-        
-        
+
+
 
       }
 
@@ -433,6 +435,8 @@ function activatePicker() {
           data: serialize(data),
           success: function(response, textStatus){
               console.log("received response from clippy central");
+              console.log(response);
+
               if (response.error) {
                 if (response.error == "max_clips_free") {
                   var upgrade = confirm(response.errorMsg);
@@ -440,7 +444,7 @@ function activatePicker() {
                     var next = {
                       'next': document.location.href
                     };
-                    
+
                     window.location = "https://clippy.in/signupUnlimited?" + serialize(next);
                   }
                   else {
@@ -463,11 +467,25 @@ function activatePicker() {
               jQuery('#snippet-loader').html(new_html);
           }
       });
+      return false;
     };
 
     document.body.addEventListener("mouseover", snip_event_listener.mouseover, true);
     document.body.addEventListener("mouseout",  snip_event_listener.mouseout,  true);
     document.body.addEventListener("click",     snip_event_listener.click,     true);
+    jQuery(document).keyup(function(e) {
+        if (e.keyCode == 27) {
+            console.log('Escape key pressed.');
+            //remove the event listeners
+            document.body.removeEventListener("mouseover", snip_event_listener.mouseover, true);
+            document.body.removeEventListener("mouseout",  snip_event_listener.mouseout,  true);
+            document.body.removeEventListener("click",     snip_event_listener.click,     true);
+            // Remove the outline
+            snip_event_listener.current_target.style.outline = "";
+        }
+    });
+
+
 }
 
 (function(){
