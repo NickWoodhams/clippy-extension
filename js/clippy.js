@@ -303,8 +303,8 @@ function copyTextToClipboard(text) {
 
 function activatePicker() {
 
-    var host = "https://clippy.in";
-    // host = "http://localhost:28889";
+    // var host = "https://clippy.in";
+    host = "http://localhost:28889";
 
     jQuery("#snippet-loader").remove();
 
@@ -344,18 +344,15 @@ function activatePicker() {
     snip_event_listener.click = function(e) {
       e.preventDefault();
 
-        chrome.runtime.sendMessage({msg: "capture"}, function(response) {
-            screenshot = response.imgSrc;
-        });
-
-      var elem = jQuery(e.target);
-      elem.css('outline', 'none');
-      console.log("Clippy token: " + jQuery('#clippy-authentication').contents());
-
       //remove the event listeners
       document.body.removeEventListener("mouseover", snip_event_listener.mouseover, true);
       document.body.removeEventListener("mouseout",  snip_event_listener.mouseout,  true);
       document.body.removeEventListener("click",     snip_event_listener.click,     true);
+
+      var elem = jQuery(e.target);
+      elem.css('outline', 'none');
+      console.log("Clippy token: " + jQuery('#clippy-authentication').contents());
+      jQuery("#snippet-loader").hide();
 
 
       html_jq = jQuery(e.target); //gets html including self
@@ -406,20 +403,19 @@ function activatePicker() {
       ];
 
       inline_html_js_obj = make_inline_styles(html_js_obj, ignore_styles=ignore_styles);
-
       items = html_js_obj.getElementsByTagName("*");
       inline_items = inline_html_js_obj.getElementsByTagName("*");
       for (var i = items.length; i--;) {
-
         new_element = make_inline_styles(items[i], ignore_styles=[]);
         if (new_element.tagName != 'SCRIPT') {
           var a = inline_items[i].parentNode.replaceChild(new_element, inline_items[i]);
           // console.log(a);
         }
-
-
-
       }
+
+      chrome.runtime.sendMessage({msg: "capture"}, function(response) {
+      screenshot = response.imgSrc;
+      jQuery("#snippet-loader").show();
 
       html = jQuery(inline_html_js_obj).wrap('<div></div>').parent().html();
       data = {
@@ -429,8 +425,8 @@ function activatePicker() {
           'html': html,
           'height': e.target.clientHeight,
           'width': e.target.clientWidth,
-          'x_pos': html_jq.offset().left,
-          'y_pos': html_jq.offset().top,
+          'top': html_jq.offset().top - $(window).scrollTop(),
+          'left': html_jq.offset().left - $(window).scrollLeft(),
           'last_width': window.innerWidth,
           'last_height': window.innerHeight,
           'screenshot': screenshot
@@ -513,6 +509,7 @@ function activatePicker() {
 
 
       return false;
+      });
     };
 
     document.body.addEventListener("mouseover", snip_event_listener.mouseover, true);
