@@ -534,7 +534,7 @@ function activatePicker() {
 
 (function(){
 
-    var v = "1.11.2";
+    var v = "1.8.2";
 
     if (window.jQuery === undefined || window.jQuery.fn.jquery < v) {
         var done = false;
