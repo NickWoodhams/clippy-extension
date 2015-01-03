@@ -44,6 +44,11 @@ function importCSS(href, look_for, onload) {
   }
 }
 
+function dynamicStyles() {
+    var s = document.createElement('style');
+    s.setAttribute('id', 'itsdynamic');
+    head.appendChild(s);
+}
 
 function wait_for_script_load(look_for, callback) {
   var interval = setInterval(function() {
@@ -56,28 +61,8 @@ function wait_for_script_load(look_for, callback) {
 
 
 function show_loader_pane() {
-    jQuery('body').append('<div id="snippet-loader">Loading Clip</div>');
-
-    var opts = {
-      lines: 13, // The number of lines to draw
-      length: 7, // The length of each line
-      width: 4, // The line thickness
-      radius: 10, // The radius of the inner circle
-      corners: 1, // Corner roundness (0..1)
-      rotate: 0, // The rotation offset
-      color: '#fff', // #rgb or #rrggbb
-      speed: 1, // Rounds per second
-      trail: 60, // Afterglow percentage
-      shadow: false, // Whether to render a shadow
-      hwaccel: false, // Whether to use hardware acceleration
-      className: 'spinner', // The CSS class to assign to the spinner
-      zIndex: 2e9, // The z-index (defaults to 2000000000)
-      top: 'auto', // Top position relative to parent in px
-      left: 'auto' // Left position relative to parent in px
-    };
-    var spinner = new Spinner(opts).spin(document.getElementById('snippet-loader'));
+    jQuery('body').append('<div id="snippet-loader">Select a clip or press escape.</div>');
 }
-
 
 function make_inline_styles(vanilla_js_obj, ignore_styles) {
 
@@ -307,12 +292,30 @@ function make_inline_styles(vanilla_js_obj, ignore_styles) {
   return new_js_obj;
 }
 
+function copyTextToClipboard(text) {
+    var copyFrom = $('<textarea/>');
+    copyFrom.text(text);
+    $('body').append(copyFrom);
+    copyFrom.select();
+    document.execCommand('copy');
+    copyFrom.remove();
+}
 
 function activatePicker() {
+
+    var host = "https://clippy.in";
+    // host = "http://localhost:28889";
+
     jQuery("#snippet-loader").remove();
+
+    // Show bar across the top
+    show_loader_pane();
+
     jQuery("#clippy-authentication").remove();
-    importCSS('https://clippy.in/static/css/bookmarklet-styles.css');
-    importJS('https://clippy.in/ajax/authenticate?domain=' + window.location.href);
+    importCSS(host + '/static/css/bookmarklet-styles.css');
+    importCSS("//cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.css");
+    importCSS("//fonts.googleapis.com/css?family=Open+Sans:700,400");
+    importJS(host + '/ajax/authenticate?domain=' + window.location.href);
 
     var snip_event_listener = {
         current_target: null
@@ -320,18 +323,33 @@ function activatePicker() {
 
     snip_event_listener.mouseover = function(e) {
         snip_event_listener.current_target = e.target;
-        e.target.style.outline = "4px solid #4c88ae";
+        var elem = jQuery(e.target);
+        // elem.addClass('clippy-active-element');
+        elem.css('outline', "4px dotted #4c88ae");
+        // Highlight the div
+        // e.target.setAttribute("data-original-background", e.target.style.background);
+        // e.target.style.background = "#EEDD6B";
+        // Add an absolute positioned div over the top
+
     };
 
     snip_event_listener.mouseout = function(e) {
-      e.target.style.outline = "";
+        snip_event_listener.current_target = e.target;
+        var elem = jQuery(e.target);
+        elem.css('outline', 'none');
+        // elem.removeClass('clippy-active-element');
+        // e.target.style.background = e.target.getAttribute("data-original-background");
     };
 
     snip_event_listener.click = function(e) {
       e.preventDefault();
-      importJS('https://clippy.in/static/js/spin.min.js', show_loader_pane);
 
-      e.target.style.outline = "";
+        chrome.runtime.sendMessage({msg: "capture"}, function(response) {
+            screenshot = response.imgSrc;
+        });
+
+      var elem = jQuery(e.target);
+      elem.css('outline', 'none');
       console.log("Clippy token: " + jQuery('#clippy-authentication').contents());
 
       //remove the event listeners
@@ -388,19 +406,6 @@ function activatePicker() {
       ];
 
       inline_html_js_obj = make_inline_styles(html_js_obj, ignore_styles=ignore_styles);
-      // console.log("html_jq");
-      // console.log(html_jq);
-      // console.log("---------------------------------");
-      // console.log("html_js_obj");
-      // console.log(html_js_obj);
-      // console.log("---------------------------------");
-      // console.log("inline_html");
-      // console.log(inline_html);
-      // console.log("---------------------------------");
-      // console.log("inline_html_js_obj");
-      // console.log(inline_html_js_obj);
-      // console.log("---------------------------------");
-
 
       items = html_js_obj.getElementsByTagName("*");
       inline_items = inline_html_js_obj.getElementsByTagName("*");
@@ -424,49 +429,89 @@ function activatePicker() {
           'html': html,
           'height': e.target.clientHeight,
           'width': e.target.clientWidth,
-          'window_width': window.innerWidth
+          'x_pos': html_jq.offset().left,
+          'y_pos': html_jq.offset().top,
+          'last_width': window.innerWidth,
+          'last_height': window.innerHeight,
+          'screenshot': screenshot
       };
       console.log(data);
 
       jQuery.ajax({
-          url: 'https://clippy.in/ajax/addSnip',
+          url: host + '/ajax/addSnip',
           type: 'post',
           timeout: 150000,
           data: serialize(data),
           success: function(response, textStatus){
-              console.log("received response from clippy central");
-              console.log(response);
+            console.log("received response from clippy central");
+            console.log(response);
+            var new_html = '<a href="#" id="close_snippet_loader">X</a>';
+            new_html = new_html + '<table id="clippy_table"><tr>';
+            new_html = new_html + '<td><div id="clippy_logo"><a href="' + host + '" id="clippy_logo">Clippy</a></div></td>';
+            new_html = new_html + '<td width="262"><select id="destination_board_id"></select></td>';
+            new_html = new_html + '<td><div id="success-message-span">Clip saved!</div></td>';
+            new_html = new_html + '<td><a href="#" id="copy_clip_url">Copy Link</a></td>';
+            // new_html = new_html + '<td><a id="clippy_link" href="//clippy.in/default"></a></td>';
+            new_html = new_html + "</tr></table>";
+            jQuery(new_html);
+            jQuery('#snippet-loader').html(new_html);
+            jQuery("#destination_board_id").append(
+                $.map(response.boards, function(board){
+                    return jQuery('<option>', { val: board.id, text: board.title });
+                })
+            ).prepend(
+                jQuery('<option>', { val: "" })
+            ).select2({
+                // width: 'resolve',
+                placeholder: 'Move Clip',
+                containerCssClass: "destination-select2"
+            });
+            jQuery("#destination_board_id").on("change", function(e) {
+                console.log(e, $(this).val());
+                var payload = {
+                    'code': jQuery('#clippy-authentication').val(),
+                    'snip_id': response.snip_id,
+                    'new_board_id': $(this).val(),
+                    'last_width': window.innerWidth,
+                    'last_height': window.innerHeight
+                };
+                console.log(payload);
 
-              if (response.error) {
-                if (response.error == "max_clips_free") {
-                  var upgrade = confirm(response.errorMsg);
-                  if (upgrade) {
-                    var next = {
-                      'next': document.location.href
-                    };
+                $.getJSON(host + '/ajax/moveSnip?' + serialize(payload), function(data){
+                    console.log(data);
+                    if (data.success === true) {
+                        console.log("successfully moved snippet");
+                        jQuery('#success-message-span').html("Successfully moved!");
+                        jQuery('#clippy_logo').attr('href', host + '/board/' + data.new_board_id);
+                    }
+                });
+            });
+            jQuery('#close_snippet_loader').on('click', function() {
+                jQuery('#snippet-loader').slideUp();
+            });
 
-                    window.location = "https://clippy.in/signupUnlimited?" + serialize(next);
-                  }
-                  else {
-                    var new_html = '<span id="error-message-span">Error!</span>';
-                    new_html = new_html + '<ul id="success-choices"><li><a href="https://clippy.in/default">Go to Clippy</a></li><li><button class="close-button" onclick="javascript:closeSuccessMessage();" value="Close">Close</button></li></ul>';
-                    jQuery('#snippet-loader').html(new_html);
-                  }
-                }
-              }
-              else {
-                var new_html = '<span id="success-message-span">Clip saved!</span>';
-                new_html = new_html + '<ul id="success-choices"><li><a href="https://clippy.in/default">Go to Clippy</a></li><li><button class="close-button" onclick="javascript:closeSuccessMessage();" value="Close">Close</button></li></ul>';
-                jQuery('#snippet-loader').html(new_html);
-              }
+            jQuery('#copy_clip_url').attr('data-url', response.public_url_code);
+            jQuery('#copy_clip_url').on('click', function(a) {
+                e.preventDefault();
+                copyTextToClipboard(host + "/s/" + jQuery(this).attr('data-url'));
+                jQuery('#success-message-span').html("Copied link!");
+                return false;
+                // prompt("Public URL", host + "/s/" + jQuery(this).attr('data-url'));
+            });
+            // setTimeout(function() {
+            //     jQuery('#snippet-loader').slideUp();
+            // }, 7500);
+
           },
           error: function(jqXHR, textStatus, errorThrown){
               console.log(textStatus);
-              var new_html = '<span id="error-message-span">Error!</span>';
-              new_html = new_html + '<ul id="success-choices"><li><a href="https://clippy.in/default">Go to Clippy</a></li><li><button class="close-button" onclick="javascript:closeSuccessMessage();" value="Close">Close</button></li></ul>';
+              var new_html = '<div id="error-message-span">Error!</div>';
+              new_html = new_html + '<ul id="success-choices"><li><a href="https://clippy.in/default">Go to Clippy</a></li><li><a class="close-button" onclick="javascript:closeSuccessMessage();" value="Close">Close</a></li></ul>';
               jQuery('#snippet-loader').html(new_html);
           }
       });
+
+
       return false;
     };
 
@@ -476,12 +521,14 @@ function activatePicker() {
     jQuery(document).keyup(function(e) {
         if (e.keyCode == 27) {
             console.log('Escape key pressed.');
+            var elem = jQuery(e.target);
+            elem.css('outline', 'none');
             //remove the event listeners
             document.body.removeEventListener("mouseover", snip_event_listener.mouseover, true);
             document.body.removeEventListener("mouseout",  snip_event_listener.mouseout,  true);
             document.body.removeEventListener("click",     snip_event_listener.click,     true);
             // Remove the outline
-            snip_event_listener.current_target.style.outline = "";
+            jQuery(snip_event_listener.current_target).removeClass('clippy-active-element');
         }
     });
 
@@ -490,12 +537,12 @@ function activatePicker() {
 
 (function(){
 
-    var v = "1.8.3";
+    var v = "1.11.2";
 
     if (window.jQuery === undefined || window.jQuery.fn.jquery < v) {
         var done = false;
         var script = document.createElement("script");
-        script.src = "https://ajax.googleapis.com/ajax/libs/jquery/" + v + "/jquery.min.js";
+        script.src = "//ajax.googleapis.com/ajax/libs/jquery/" + v + "/jquery.min.js";
         script.onload = script.onreadystatechange = function(){
             if (!done && (!this.readyState || this.readyState == "loaded" || this.readyState == "complete")) {
                 done = true;
