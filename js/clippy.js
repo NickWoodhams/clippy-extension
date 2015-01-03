@@ -303,8 +303,8 @@ function copyTextToClipboard(text) {
 
 function activatePicker() {
 
-    // var host = "https://clippy.in";
-    host = "http://localhost:28889";
+    var host = "https://clippy.in";
+    // host = "http://localhost:28889";
 
     jQuery("#snippet-loader").remove();
 
