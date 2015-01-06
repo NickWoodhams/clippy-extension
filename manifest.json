@@ -1,7 +1,7 @@
 {
   "name": "Clippy",
   "short_name": "Clippy",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "manifest_version": 2,
   "description": "Clip HTML straight from websites!",
   "background": { "scripts": ["js/main.js"] },
