@@ -1,10 +1,10 @@
 {
   "name": "Clippy",
   "short_name": "Clippy",
-  "version": "2.0.2",
-  "manifest_version": 2,
+  "version": "2.0.3",
+  "manifest_version": 3,
   "description": "Clip HTML straight from websites!",
-  "background": { "scripts": ["js/main.js"] },
+  "background": { "scripts": ["js/jquery-1.11.2.min.js", "js/clippy.js", "js/main.js"] },
   "browser_action": {
     "default_icon": {
       "19": "images/dash.png"
@@ -13,7 +13,7 @@
   "content_scripts": [
     {
       "all_frames": true,
-      "js": ["js/jquery-1.11.2.min.js", "js/select2.min.js"],
+      "js": ["js/jquery-1.11.2.min.js", "js/clippy.js", "js/main.js", "js/select2.min.js"],
       "matches": ["http://*/*", "https://*/*"]
     }
   ],

@@ -1,78 +1,13 @@
+
+
+importJS("//code.jquery.com/jquery-1.11.2.min.js")
+
 serialize = function(obj) {
     var str = [];
     for (var p in obj)
         str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
     return str.join("&");
 };
-
-
-/**
- * Writes an image into a canvas taking into
- * account the backing store pixel ratio and
- * the device pixel ratio.
- *
- * @author Paul Lewis
- * @param {Object} opts The params for drawing an image to the canvas
- */
-function drawImage(opts, callback) {
-    // create image
-    var pic = new Image();
-    // get the canvas and context
-    var canvas = document.createElement("canvas"),
-        context = canvas.getContext('2d'),
-        image = opts.image,
-
-    // now default all the dimension info
-        srcx = opts.srcx || 0,
-        srcy = opts.srcy || 0,
-        srcw = opts.srcw || image.naturalWidth,
-        srch = opts.srch || image.naturalHeight,
-        desx = opts.desx || srcx,
-        desy = opts.desy || srcy,
-        desw = opts.desw || srcw,
-        desh = opts.desh || srch,
-        auto = opts.auto,
-
-    // finally query the various pixel ratios
-        devicePixelRatio = window.devicePixelRatio || 1,
-        backingStoreRatio = context.webkitBackingStorePixelRatio ||
-                            context.mozBackingStorePixelRatio ||
-                            context.msBackingStorePixelRatio ||
-                            context.oBackingStorePixelRatio ||
-                            context.backingStorePixelRatio || 1,
-
-        ratio = devicePixelRatio / backingStoreRatio;
-
-    // ensure we have a value set for auto.
-    // If auto is set to false then we
-    // will simply not upscale the canvas
-    // and the default behaviour will be maintained
-    if (typeof auto === 'undefined') {
-        auto = true;
-    }
-
-    // upscale the canvas if the two ratios don't match
-    if (auto && devicePixelRatio !== backingStoreRatio) {
-
-        var oldWidth = canvas.width;
-        var oldHeight = canvas.height;
-
-        canvas.width = oldWidth * ratio;
-        canvas.height = oldHeight * ratio;
-
-        canvas.style.width = oldWidth + 'px';
-        canvas.style.height = oldHeight + 'px';
-
-        // now scale the context to counter
-        // the fact that we've manually scaled
-        // our canvas element
-        context.scale(ratio, ratio);
-
-    }
-
-    context.drawImage(pic, srcx, srcy, srcw, srch, desx, desy, desw, desh);
-    callback(canvas.toDataURL());
-}
 
 
 function resizeImage(url, width, height, left, top, callback) {
@@ -87,29 +22,23 @@ function resizeImage(url, width, height, left, top, callback) {
         canvas.style.width = canvas.width;
         canvas.style.height = canvas.height;
 
-        // Scale and draw the source image to the canvas
-        var image = sourceImage;
-        // X coordinate of top left corner or sub rectangle
-        var sx = left;
-        // Y coordinate of top right corner of sub rectangle
-        var sy = top;
-        // The width of the sub-rectangle of the source image
-        var sWidth = width;
-        // The height of the sub-rectangle of the source image
-        var sHeight = height;
-        // The X coordinate in the destination canvas at which to place the top-left corner of the source image.
-        var dx = 0;
-        // The Y coordinate in the destination canvas at which to place the top-left corner of the source image.
-        var dy = 0;
-        // Scaled width
-        var dWidth = undefined;
-        // Scaled height
-        var dHeight = undefined;
+        // Set the vars
+        var pic = sourceImage;
+        var srcx = left * window.devicePixelRatio;
+        var srcy = top * window.devicePixelRatio;
+        var srch = height * window.devicePixelRatio;
+        var srcw = width * window.devicePixelRatio;
+        var desx = 0;
+        var desy = 0;
+        var desw = width;
+        var desh = height;
 
         // Crop it!
         context = canvas.getContext("2d");
-        context.drawImage(image, left, top, width, height, 0, 0, width, height);
         context.scale(window.devicePixelRatio, window.devicePixelRatio);
+        context.drawImage(pic, srcx, srcy, srcw, srch, desx, desy, desw, desh);
+        console.log(pic.url, srcx, srcy, srcw, srch, desx, desy, desw, desh);
+        // context.drawImage(pic, srcx, srcy, srcw, srch, desx, desy, desw, desh);
 
         // Convert the canvas to a data URL in PNG format
         callback(canvas.toDataURL());
@@ -202,6 +131,7 @@ function activatePicker() {
     importCSS(host + '/static/css/bookmarklet-styles.css');
     importCSS("//cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.css");
     importCSS("//fonts.googleapis.com/css?family=Open+Sans:700,400");
+    importJS("//code.jquery.com/jquery-1.11.2.min.js")
     importJS(host + '/ajax/authenticate?domain=' + window.location.href);
     // importJS("//cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.js")
 
@@ -218,7 +148,6 @@ function activatePicker() {
         // e.target.setAttribute("data-original-background", e.target.style.background);
         // e.target.style.background = "#EEDD6B";
         // Add an absolute positioned div over the top
-
     };
 
     snip_event_listener.mouseout = function(e) {
@@ -247,23 +176,14 @@ function activatePicker() {
         chrome.runtime.sendMessage({
             msg: "capture"
         }, function(response) {
-            screenshot = response.imgSrc;
-            console.log(screenshot);
-
-            var opts = {
-                image: response.imgSrc,
-                srcx: html_jq.offset().left - $(window).scrollLeft(),
-                srcy: html_jq.offset().left - $(window).scrollTop(),
-                desx: 0,
-                desy: 0,
-                desw: e.target.clientWidth,
-                desh: e.target.clientHeight,
-            }
-
-            screenshot_resized = drawImage(
-                opts,
-                function(response) {
-                    console.log("screenshot_resized", response)
+            screenshot_resized = resizeImage(
+                response.imgSrc,
+                e.target.clientWidth,
+                e.target.clientHeight,
+                html_jq.offset().left - $(window).scrollLeft(),
+                html_jq.offset().top - $(window).scrollTop(),
+                function(resizedImgSrc) {
+                    console.log("screenshot_resized", resizedImgSrc);
                     jQuery("#snippet-loader").show();
 
                     data = {
@@ -276,7 +196,7 @@ function activatePicker() {
                         'left': html_jq.offset().left - $(window).scrollLeft(),
                         'last_width': window.innerWidth,
                         'last_height': window.innerHeight,
-                        'screenshot': screenshot
+                        'screenshot': resizedImgSrc
                     };
                     console.log(data);
 
