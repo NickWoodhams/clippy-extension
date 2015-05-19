@@ -1,7 +1,4 @@
 
-
-importJS("//code.jquery.com/jquery-1.11.2.min.js")
-
 serialize = function(obj) {
     var str = [];
     for (var p in obj)
@@ -68,7 +65,7 @@ function importJS(scriptPath, callback) {
 
 
 function closeSuccessMessage() {
-    jQuery("#snippet-loader").remove();
+    $("#snippet-loader").remove();
 }
 
 
@@ -104,7 +101,7 @@ function wait_for_script_load(look_for, callback) {
 
 
 function show_loader_pane() {
-    jQuery('body').append('<div id="snippet-loader">Select a clip or press escape.</div>');
+    $('body').append('<div id="snippet-loader">Select a clip or press escape.</div>');
 }
 
 
@@ -119,21 +116,17 @@ function copyTextToClipboard(text) {
 
 function activatePicker() {
 
-    var host = "https://clippy.in";
-    // host = "http://localhost:28889";
-
-    jQuery("#snippet-loader").remove();
+    $("#snippet-loader").remove();
 
     // Show bar across the top
     show_loader_pane();
 
-    jQuery("#clippy-authentication").remove();
-    importCSS(host + '/static/css/bookmarklet-styles.css');
+    $("#clippy-authentication").remove();
+
+    importJS('//clippy.in/ajax/authenticate?domain=' + window.location.href);
+    importCSS("//clippy.in/static/css/bookmarklet-styles.css");
     importCSS("//cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.css");
     importCSS("//fonts.googleapis.com/css?family=Open+Sans:700,400");
-    importJS("//code.jquery.com/jquery-1.11.2.min.js")
-    importJS(host + '/ajax/authenticate?domain=' + window.location.href);
-    // importJS("//cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.js")
 
     var snip_event_listener = {
         current_target: null
@@ -141,7 +134,7 @@ function activatePicker() {
 
     snip_event_listener.mouseover = function(e) {
         snip_event_listener.current_target = e.target;
-        var elem = jQuery(e.target);
+        var elem = $(e.target);
         // elem.addClass('clippy-active-element');
         elem.css('outline', "4px dotted #4c88ae");
         // Highlight the div
@@ -152,7 +145,7 @@ function activatePicker() {
 
     snip_event_listener.mouseout = function(e) {
         snip_event_listener.current_target = e.target;
-        var elem = jQuery(e.target);
+        var elem = $(e.target);
         elem.css('outline', 'none');
         // elem.removeClass('clippy-active-element');
         // e.target.style.background = e.target.getAttribute("data-original-background");
@@ -166,12 +159,12 @@ function activatePicker() {
         document.body.removeEventListener("mouseout", snip_event_listener.mouseout, true);
         document.body.removeEventListener("click", snip_event_listener.click, true);
 
-        var elem = jQuery(e.target);
+        var elem = $(e.target);
         elem.css('outline', 'none');
-        console.log("Clippy token: " + jQuery('#clippy-authentication').contents());
-        jQuery("#snippet-loader").hide();
+        console.log("Clippy token: " + $('#clippy-authentication').contents());
+        $("#snippet-loader").hide();
 
-        html_jq = jQuery(e.target); //gets html including self
+        html_jq = $(e.target); //gets html including self
 
         chrome.runtime.sendMessage({
             msg: "capture"
@@ -184,10 +177,10 @@ function activatePicker() {
                 html_jq.offset().top - $(window).scrollTop(),
                 function(resizedImgSrc) {
                     console.log("screenshot_resized", resizedImgSrc);
-                    jQuery("#snippet-loader").show();
+                    $("#snippet-loader").show();
 
                     data = {
-                        'code': jQuery('#clippy-authentication').val(),
+                        'code': $('#clippy-authentication').val(),
                         'url': window.location.href,
                         'title': document.title,
                         'height': e.target.clientHeight,
@@ -200,8 +193,8 @@ function activatePicker() {
                     };
                     console.log(data);
 
-                    jQuery.ajax({
-                        url: host + '/ajax/addSnip',
+                    $.ajax({
+                        url: '//clippy.in/ajax/addSnip',
                         type: 'post',
                         timeout: 150000,
                         data: serialize(data),
@@ -210,23 +203,23 @@ function activatePicker() {
                             console.log(response);
                             var new_html = '<a href="#" id="close_snippet_loader">X</a>';
                             new_html = new_html + '<table id="clippy_table"><tr>';
-                            new_html = new_html + '<td><div id="clippy_logo"><a href="' + host + '" id="clippy_logo">Clippy</a></div></td>';
+                            new_html = new_html + '<td><div id="clippy_logo"><a href="' + '//clippy.in" id="clippy_logo">Clippy</a></div></td>';
                             new_html = new_html + '<td width="262"><select id="destination_board_id"></select></td>';
                             new_html = new_html + '<td><div id="success-message-span">Clip saved!</div></td>';
                             new_html = new_html + '<td><a href="#" id="copy_clip_url">Copy Link</a></td>';
                             // new_html = new_html + '<td><a id="clippy_link" href="//clippy.in/default"></a></td>';
                             new_html = new_html + "</tr></table>";
-                            jQuery(new_html);
-                            jQuery('#snippet-loader').html(new_html);
-                            jQuery("#destination_board_id").append(
+                            $(new_html);
+                            $('#snippet-loader').html(new_html);
+                            $("#destination_board_id").append(
                                 $.map(response.boards, function(board) {
-                                    return jQuery('<option>', {
+                                    return $('<option>', {
                                         val: board.id,
                                         text: board.title
                                     });
                                 })
                             ).prepend(
-                                jQuery('<option>', {
+                                $('<option>', {
                                     val: ""
                                 })
                             ).select2({
@@ -234,10 +227,10 @@ function activatePicker() {
                                 placeholder: 'Move Clip',
                                 containerCssClass: "destination-select2"
                             });
-                            jQuery("#destination_board_id").on("change", function(e) {
+                            $("#destination_board_id").on("change", function(e) {
                                 console.log(e, $(this).val());
                                 var payload = {
-                                    'code': jQuery('#clippy-authentication').val(),
+                                    'code': $('#clippy-authentication').val(),
                                     'snip_id': response.snip_id,
                                     'new_board_id': $(this).val(),
                                     'last_width': window.innerWidth,
@@ -245,29 +238,29 @@ function activatePicker() {
                                 };
                                 console.log(payload);
 
-                                $.getJSON(host + '/ajax/moveSnip?' + serialize(payload), function(data) {
+                                $.getJSON('//clippy.in/ajax/moveSnip?' + serialize(payload), function(data) {
                                     console.log(data);
                                     if (data.success === true) {
                                         console.log("successfully moved snippet");
-                                        jQuery('#success-message-span').html("Successfully moved!");
-                                        jQuery('#clippy_logo').attr('href', host + '/board/' + data.new_board_id);
+                                        $('#success-message-span').html("Successfully moved!");
+                                        $('#clippy_logo').attr('href', '//clippy.in/board/' + data.new_board_id);
                                     }
                                 });
                             });
-                            jQuery('#close_snippet_loader').on('click', function() {
-                                jQuery('#snippet-loader').slideUp();
+                            $('#close_snippet_loader').on('click', function() {
+                                $('#snippet-loader').slideUp();
                             });
 
-                            jQuery('#copy_clip_url').attr('data-url', response.public_url_code);
-                            jQuery('#copy_clip_url').on('click', function(a) {
+                            $('#copy_clip_url').attr('data-url', response.public_url_code);
+                            $('#copy_clip_url').on('click', function(a) {
                                 e.preventDefault();
-                                copyTextToClipboard(host + "/s/" + jQuery(this).attr('data-url'));
-                                jQuery('#success-message-span').html("Copied link!");
+                                copyTextToClipboard("https://clippy.in/s/" + $(this).attr('data-url'));
+                                $('#success-message-span').html("Copied link!");
                                 return false;
-                                // prompt("Public URL", host + "/s/" + jQuery(this).attr('data-url'));
+                                // prompt("Public URL", "https://clippy.in/s/" + $(this).attr('data-url'));
                             });
                             // setTimeout(function() {
-                            //     jQuery('#snippet-loader').slideUp();
+                            //     $('#snippet-loader').slideUp();
                             // }, 7500);
 
                         },
@@ -275,7 +268,7 @@ function activatePicker() {
                             console.log(textStatus);
                             var new_html = '<div id="error-message-span">Error!</div>';
                             new_html = new_html + '<ul id="success-choices"><li><a href="https://clippy.in/default">Go to Clippy</a></li><li><a class="close-button" onclick="javascript:closeSuccessMessage();" value="Close">Close</a></li></ul>';
-                            jQuery('#snippet-loader').html(new_html);
+                            $('#snippet-loader').html(new_html);
                         }
                     });
 
@@ -292,40 +285,19 @@ function activatePicker() {
     document.body.addEventListener("click", snip_event_listener.click, true);
 
     // Check if the user presses escape
-    jQuery(document).keyup(function(e) {
+    $(document).keyup(function(e) {
         if (e.keyCode == 27) {
             console.log('Escape key pressed.');
-            var elem = jQuery(e.target);
+            var elem = $(e.target);
             elem.css('outline', 'none');
             //remove the event listeners
             document.body.removeEventListener("mouseover", snip_event_listener.mouseover, true);
             document.body.removeEventListener("mouseout", snip_event_listener.mouseout, true);
             document.body.removeEventListener("click", snip_event_listener.click, true);
             // Remove the outline
-            jQuery(snip_event_listener.current_target).removeClass('clippy-active-element');
+            $(snip_event_listener.current_target).removeClass('clippy-active-element');
         }
     });
 
 
 }
-
-(function() {
-
-    var v = "1.11.2";
-
-    if (window.jQuery === undefined || window.jQuery.fn.jquery < v) {
-        var done = false;
-        var script = document.createElement("script");
-        script.src = "//ajax.googleapis.com/ajax/libs/jquery/" + v + "/jquery.min.js";
-        script.onload = script.onreadystatechange = function() {
-            if (!done && (!this.readyState || this.readyState == "loaded" || this.readyState == "complete")) {
-                done = true;
-                activatePicker();
-            }
-        };
-        document.getElementsByTagName("head")[0].appendChild(script);
-    } else {
-        activatePicker();
-    }
-
-})();
