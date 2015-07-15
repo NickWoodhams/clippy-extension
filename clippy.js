@@ -278,8 +278,9 @@ function activatePicker() {
 
     $("#clippy-authentication").remove();
 
-    importJS('//code.jquery.com/jquery-1.11.3.min.js');
-    importJS('//clippy.in/ajax/authenticate?domain=' + window.location.href);
+    importJS('//code.jquery.com/jquery-1.11.3.min.js', function() {
+        importJS('//clippy.in/ajax/authenticate?domain=' + window.location.href);
+    });
     importCSS("//cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.css");
     importCSS("//clippy.in/static/css/bookmarklet-styles.css");
     importCSS("//fonts.googleapis.com/css?family=Open+Sans:700,400");
