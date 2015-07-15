@@ -6,8 +6,8 @@
     "description": "Clip HTML straight from websites!",
     "background": {
         "scripts": [
-            "js/clippy.js",
-            "js/main.js"
+            "main.js",
+            "clippy.js"
         ]
     },
     "browser_action": {
@@ -16,11 +16,10 @@
         }
     },
     "content_scripts": [{
-        "matches": ["http://*/*", "https://*/*"],
+        "matches": ["<all_urls>"],
         "js": [
-            "js/jquery-1.11.2.min.js",
-            "js/select2.min.js",
-            "js/clippy.js"
+            "jquery-1.11.2.min.js",
+            "select2.min.js"
         ]
     }],
     "permissions": [

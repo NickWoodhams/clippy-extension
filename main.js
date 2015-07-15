@@ -1,7 +1,8 @@
 chrome.browserAction.onClicked.addListener(
   function(tab) {
-    chrome.tabs.executeScript(tab.id, {file:"js/clippy.js"});
-    chrome.tabs.executeScript(tab.id, {code:"activatePicker();", runAt:"document_end"});
+    chrome.tabs.executeScript(null, {file:"clippy.js"}, function() {
+        chrome.tabs.executeScript(null, {code:"activatePicker();", runAt:"document_end"});
+    });
   }
 );
 chrome.runtime.onMessage.addListener(

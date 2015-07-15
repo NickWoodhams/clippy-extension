@@ -63,7 +63,7 @@ function importJS(scriptPath, callback) {
 
 
 function closeSuccessMessage() {
-    jQuery("#snippet-loader").remove();
+    $("#snippet-loader").remove();
 }
 
 
@@ -101,14 +101,14 @@ function wait_for_script_load(look_for, callback) {
 
 
 function show_loader_pane() {
-    jQuery('body').append('<div id="snippet-loader">Select a clip or press escape.</div>');
+    $('body').append('<div id="snippet-loader">Select a clip or press escape.</div>');
 }
 
 
 function copyTextToClipboard(text) {
-    var copyFrom = jQuery('<textarea/>');
+    var copyFrom = $('<textarea/>');
     copyFrom.text(text);
-    jQuery('body').append(copyFrom);
+    $('body').append(copyFrom);
     copyFrom.select();
     document.execCommand('copy');
     copyFrom.remove();
@@ -129,10 +129,10 @@ function saveScreenshot(bounds) {
 
             function(resizedImgSrc) {
                 console.log("screenshot_resized", resizedImgSrc);
-                jQuery("#snippet-loader").show();
+                $("#snippet-loader").show();
 
                 data = {
-                    'code': jQuery('#clippy-authentication').val(),
+                    'code': $('#clippy-authentication').val(),
                     'url': window.location.href,
                     'title': document.title,
                     'height': bounds.h,
@@ -161,31 +161,31 @@ function saveScreenshot(bounds) {
                         new_html = new_html + '<td><a href="#" id="copy_clip_url">Copy Link</a></td>';
                         // new_html = new_html + '<td><a id="clippy_link" href="//clippy.in/default"></a></td>';
                         new_html = new_html + "</tr></table>";
-                        jQuery(new_html);
-                        jQuery('#snippet-loader').html(new_html);
-                        jQuery("#destination_board_id").append(
+                        $(new_html);
+                        $('#snippet-loader').html(new_html);
+                        $("#destination_board_id").append(
                             $.map(response.boards, function(board) {
-                                return jQuery('<option>', {
+                                return $('<option>', {
                                     val: board.id,
                                     text: board.title
                                 });
                             })
                         ).prepend(
-                            jQuery('<option>', {
+                            $('<option>', {
                                 val: ""
                             })
                         );
-                        jQuery("#destination_board_id").select2({
+                        $("#destination_board_id").select2({
                             // width: 'resolve',
                             placeholder: 'Move Clip',
                             containerCssClass: "destination-select2"
                         });
-                        jQuery("#destination_board_id").on("change", function(e) {
-                            console.log(e, jQuery(this).val());
+                        $("#destination_board_id").on("change", function(e) {
+                            console.log(e, $(this).val());
                             var payload = {
-                                'code': jQuery('#clippy-authentication').val(),
+                                'code': $('#clippy-authentication').val(),
                                 'snip_id': response.snip_id,
-                                'new_board_id': jQuery(this).val(),
+                                'new_board_id': $(this).val(),
                                 'last_width': window.innerWidth,
                                 'last_height': window.innerHeight
                             };
@@ -195,25 +195,25 @@ function saveScreenshot(bounds) {
                                 console.log(data);
                                 if (data.success === true) {
                                     console.log("successfully moved snippet");
-                                    jQuery('#success-message-span').html("Successfully moved!");
-                                    jQuery('#clippy_logo').attr('href', '//clippy.in/board/' + data.new_board_id);
+                                    $('#success-message-span').html("Successfully moved!");
+                                    $('#clippy_logo').attr('href', '//clippy.in/board/' + data.new_board_id);
                                 }
                             });
                         });
-                        jQuery('#close_snippet_loader').on('click', function() {
-                            jQuery('#snippet-loader').slideUp();
+                        $('#close_snippet_loader').on('click', function() {
+                            $('#snippet-loader').slideUp();
                         });
 
-                        jQuery('#copy_clip_url').attr('data-url', response.public_url_code);
-                        jQuery('#copy_clip_url').on('click', function(e) {
+                        $('#copy_clip_url').attr('data-url', response.public_url_code);
+                        $('#copy_clip_url').on('click', function(e) {
                             e.preventDefault();
-                            copyTextToClipboard("https://clippy.in/s/" + jQuery(this).attr('data-url'));
-                            jQuery('#success-message-span').html("Copied link!");
+                            copyTextToClipboard("https://clippy.in/s/" + $(this).attr('data-url'));
+                            $('#success-message-span').html("Copied link!");
                             return false;
-                            // prompt("Public URL", "https://clippy.in/s/" + jQuery(this).attr('data-url'));
+                            // prompt("Public URL", "https://clippy.in/s/" + $(this).attr('data-url'));
                         });
                         // setTimeout(function() {
-                        //     jQuery('#snippet-loader').slideUp();
+                        //     $('#snippet-loader').slideUp();
                         // }, 7500);
 
                     },
@@ -221,7 +221,7 @@ function saveScreenshot(bounds) {
                         console.log(textStatus);
                         var new_html = '<div id="error-message-span">Error!</div>';
                         new_html = new_html + '<ul id="success-choices"><li><a href="https://clippy.in/default">Go to Clippy</a></li><li><a class="close-button" onclick="javascript:closeSuccessMessage();" value="Close">Close</a></li></ul>';
-                        jQuery('#snippet-loader').html(new_html);
+                        $('#snippet-loader').html(new_html);
                     }
                 });
 
@@ -260,16 +260,25 @@ function createCanvas() {
 }
 
 
+function clearCtx() {
+    ctx.clearRect(0,0,can.width,can.height);
+    window.ctx_cleared = true;
+}
+
+
+
+
 function activatePicker() {
     console.log("activating", Date());
 
-    jQuery("#snippet-loader").remove();
+    $("#snippet-loader").remove();
 
     // Show bar across the top
     show_loader_pane();
 
-    jQuery("#clippy-authentication").remove();
+    $("#clippy-authentication").remove();
 
+    importJS('//code.jquery.com/jquery-1.11.3.min.js');
     importJS('//clippy.in/ajax/authenticate?domain=' + window.location.href);
     importCSS("//cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.css");
     importCSS("//clippy.in/static/css/bookmarklet-styles.css");
@@ -295,10 +304,19 @@ function activatePicker() {
         can.addEventListener('mouseup',function(){
             var bounds = contextBoundingBox(ctx);
             console.log("bounds", bounds);
-            ctx.clearRect(0,0,can.width,can.height);
+
             can.removeEventListener('mousemove',addToDrawing,false);
             can.removeEventListener('mousemove',redraw,false);
-            saveScreenshot(bounds);
+
+            window.ctx_cleared = false;
+            clearCtx();
+            intvl = setInterval(function() {
+                if (window.ctx_cleared) {
+                    clearInterval(intvl);
+                    saveScreenshot(bounds);
+                }
+            }, 100);
+
         },false);
     }
     function addToDrawing(e){
@@ -317,7 +335,7 @@ function activatePicker() {
         if (!path.length) return;
         ctx.beginPath();
         ctx.moveTo.apply(ctx,path[0]);
-        console.log($(window).scrollLeft(), $(window).scrollTop());
+        // console.log($(window).scrollLeft(), $(window).scrollTop());
         ctx.lineTo.apply(ctx,[e.layerX - $(window).scrollLeft(),e.layerY - $(window).scrollTop()]);
         // for (var i=1,len=path.length;i<len;++i) ctx.lineTo.apply(ctx,path[i]);
         ctx.strokeStyle = '#000';
