@@ -1,4 +1,16 @@
 
+Element.prototype.remove = function() {
+    this.parentElement.removeChild(this);
+};
+
+NodeList.prototype.remove = HTMLCollection.prototype.remove = function() {
+    for(var i = this.length - 1; i >= 0; i--) {
+        if(this[i] && this[i].parentElement) {
+            this[i].parentElement.removeChild(this[i]);
+        }
+    }
+};
+
 serialize = function(obj) {
     var str = [];
     for (var p in obj)
@@ -263,9 +275,9 @@ function createCanvas() {
 function clearCtx() {
     ctx.clearRect(0,0,can.width,can.height);
     window.ctx_cleared = true;
+    document.body.removeChild(can);
+    document.body.removeChild(ms);
 }
-
-
 
 
 function activatePicker() {
